@@ -5,9 +5,6 @@ node_modules/
 android/app/build/
 android/app/.gradle/
 android/.gradle/
-android/gradlew
-android/gradlew.bat
-android/gradle/
 
 # IDE
 .vscode/
