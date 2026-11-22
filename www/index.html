@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #1a1a2e;
+      --display-bg: #16213e;
+      --btn-bg: #0f3460;
+      --btn-hover: #1a4a7a;
+      --btn-active: #2a5a8a;
+      --accent: #e94560;
+      --accent-hover: #ff6b7a;
+      --text: #eaeaea;
+      --text-dim: #a0a0b0;
+      --border: #2a2a4a;
+      --shadow: rgba(0, 0, 0, 0.4);
+    }
+
+    @media (prefers-color-scheme: light) {
+      :root {
+        --bg: #f0f0f5;
+        --display-bg: #ffffff;
+        --btn-bg: #e8e8ee;
+        --btn-hover: #d8d8e0;
+        --btn-active: #c8c8d0;
+        --accent: #d63048;
+        --accent-hover: #e8455a;
+        --text: #1a1a2e;
+        --text-dim: #505060;
+        --border: #d0d0d8;
+        --shadow: rgba(0, 0, 0, 0.1);
+      }
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .calculator {
+      width: 100%;
+      max-width: 340px;
+      background: var(--bg);
+      border-radius: 24px;
+      box-shadow:
+        0 20px 40px var(--shadow),
+        0 0 0 1px var(--border),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+      overflow: hidden;
+    }
+
+    .display {
+      background: var(--display-bg);
+      padding: 32px 24px;
+      text-align: right;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .expression {
+      font-size: 16px;
+      color: var(--text-dim);
+      min-height: 24px;
+      margin-bottom: 8px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .result {
+      font-size: 48px;
+      font-weight: 600;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      word-break: break-all;
+    }
+
+    .keypad {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      padding: 20px;
+    }
+
+    .btn {
+      border: none;
+      outline: none;
+      background: var(--btn-bg);
+      color: var(--text);
+      font-size: 20px;
+      font-weight: 500;
+      border-radius: 16px;
+      padding: 20px 0;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow:
+        0 4px 0 var(--border),
+        0 2px 8px var(--shadow);
+      position: relative;
+    }
+
+    .btn:hover {
+      background: var(--btn-hover);
+      transform: translateY(-2px);
+      box-shadow:
+        0 6px 0 var(--border),
+        0 4px 12px var(--shadow);
+    }
+
+    .btn:active {
+      background: var(--btn-active);
+      transform: translateY(2px);
+      box-shadow:
+        0 2px 0 var(--border),
+        0 1px 4px var(--shadow);
+    }
+
+    .btn:focus-visible {
+      box-shadow:
+        0 0 0 3px var(--accent),
+        0 4px 0 var(--border),
+        0 2px 8px var(--shadow);
+    }
+
+    .btn.accent {
+      background: var(--accent);
+      color: white;
+      box-shadow:
+        0 4px 0 #a02038,
+        0 2px 8px var(--shadow);
+    }
+
+    .btn.accent:hover {
+      background: var(--accent-hover);
+      box-shadow:
+        0 6px 0 #a02038,
+        0 4px 12px var(--shadow);
+    }
+
+    .btn.accent:active {
+      background: #c02840;
+      box-shadow:
+        0 2px 0 #a02038,
+        0 1px 4px var(--shadow);
+    }
+
+    .btn.wide {
+      grid-column: span 2;
+    }
+
+    .btn.icon {
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .history-toggle {
+      grid-column: span 4;
+      padding: 12px;
+      font-size: 14px;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px dashed var(--border);
+    }
+
+    .history-toggle:hover {
+      background: var(--btn-bg);
+      border-color: var(--text-dim);
+      color: var(--text);
+      transform: none;
+      box-shadow: none;
+    }
+
+    .history-panel {
+      grid-column: span 4;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+      background: var(--display-bg);
+      border-radius: 12px;
+      border: 1px solid var(--border);
+    }
+
+    .history-panel.open {
+      max-height: 200px;
+    }
+
+    .history-list {
+      padding: 12px;
+      max-height: 180px;
+      overflow-y: auto;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 4px;
+      font-size: 14px;
+      font-family: 'SF Mono', 'Fira Code', monospace;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: color 0.15s;
+    }
+
+    .history-item:last-child {
+      border-bottom: none;
+    }
+
+    .history-item:hover {
+      color: var(--accent);
+    }
+
+    .history-item .expr {
+      color: var(--text-dim);
+      flex: 1;
+      text-align: left;
+      margin-right: 12px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .history-item .res {
+      color: var(--text);
+      font-weight: 600;
+      white-space: nowrap;
+    }
+
+    .history-empty {
+      text-align: center;
+      color: var(--text-dim);
+      padding: 20px;
+      font-size: 14px;
+    }
+
+    .clear-history {
+      grid-column: span 4;
+      padding: 10px;
+      font-size: 13px;
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .clear-history:hover {
+      background: var(--btn-bg);
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    @media (max-width: 360px) {
+      .btn {
+        padding: 16px 0;
+        font-size: 18px;
+      }
+      .result {
+        font-size: 36px;
+      }
+    }
+
+    @keyframes press {
+      0% { transform: scale(1); }
+      50% { transform: scale(0.95); }
+      100% { transform: scale(1); }
+    }
+
+    .btn.pressed {
+      animation: press 0.1s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+    <div class="display">
+      <div class="expression" id="expression"></div>
+      <div class="result" id="result">0</div>
+    </div>
+
+    <div class="keypad" id="keypad">
+      <button class="btn" data-action="clear">C</button>
+      <button class="btn" data-action="backspace">⌫</button>
+      <button class="btn" data-action="percent">%</button>
+      <button class="btn accent" data-action="divide">÷</button>
+
+      <button class="btn" data-value="7">7</button>
+      <button class="btn" data-value="8">8</button>
+      <button class="btn" data-value="9">9</button>
+      <button class="btn accent" data-action="multiply">×</button>
+
+      <button class="btn" data-value="4">4</button>
+      <button class="btn" data-value="5">5</button>
+      <button class="btn" data-value="6">6</button>
+      <button class="btn accent" data-action="subtract">−</button>
+
+      <button class="btn" data-value="1">1</button>
+      <button class="btn" data-value="2">2</button>
+      <button class="btn" data-value="3">3</button>
+      <button class="btn accent" data-action="add">+</button>
+
+      <button class="btn wide" data-value="0">0</button>
+      <button class="btn" data-value=".">.</button>
+      <button class="btn accent" data-action="equals">=</button>
+
+      <button class="btn history-toggle" id="historyToggle">History ▼</button>
+
+      <div class="history-panel" id="historyPanel">
+        <div class="history-list" id="historyList">
+          <div class="history-empty">No calculations yet</div>
+        </div>
+        <button class="clear-history" id="clearHistory">Clear History</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (function() {
+      const resultEl = document.getElementById('result');
+      const expressionEl = document.getElementById('expression');
+      const keypad = document.getElementById('keypad');
+      const historyToggle = document.getElementById('historyToggle');
+      const historyPanel = document.getElementById('historyPanel');
+      const historyList = document.getElementById('historyList');
+      const clearHistoryBtn = document.getElementById('clearHistory');
+
+      let currentValue = '0';
+      let previousValue = '';
+      let operator = null;
+      let waitingForOperand = false;
+      let history = [];
+
+      function updateDisplay() {
+        resultEl.textContent = formatNumber(currentValue);
+        if (operator && previousValue !== '') {
+          expressionEl.textContent = `${formatNumber(previousValue)} ${getOperatorSymbol(operator)}`;
+        } else {
+          expressionEl.textContent = '';
+        }
+      }
+
+      function formatNumber(num) {
+        if (num === '' || num === '-') return '0';
+        const n = parseFloat(num);
+        if (isNaN(n)) return num;
+        if (!isFinite(n)) return 'Error';
+        return n.toLocaleString('en-US', { maximumFractionDigits: 10 });
+      }
+
+      function getOperatorSymbol(op) {
+        const symbols = { add: '+', subtract: '−', multiply: '×', divide: '÷' };
+        return symbols[op] || op;
+      }
+
+      function inputDigit(digit) {
+        if (waitingForOperand) {
+          currentValue = digit;
+          waitingForOperand = false;
+        } else {
+          currentValue = currentValue === '0' ? digit : currentValue + digit;
+        }
+        updateDisplay();
+      }
+
+      function inputDecimal() {
+        if (waitingForOperand) {
+          currentValue = '0.';
+          waitingForOperand = false;
+        } else if (!currentValue.includes('.')) {
+          currentValue += '.';
+        }
+        updateDisplay();
+      }
+
+      function handleOperator(nextOperator) {
+        const inputValue = parseFloat(currentValue);
+
+        if (operator && !waitingForOperand) {
+          const result = calculate();
+          if (result === 'Error') {
+            currentValue = 'Error';
+            operator = null;
+            previousValue = '';
+            waitingForOperand = true;
+            updateDisplay();
+            return;
+          }
+          currentValue = String(result);
+          previousValue = '';
+        } else if (previousValue === '') {
+          previousValue = currentValue;
+        }
+
+        waitingForOperand = true;
+        operator = nextOperator;
+        updateDisplay();
+      }
+
+      function calculate() {
+        const prev = parseFloat(previousValue);
+        const curr = parseFloat(currentValue);
+
+        if (isNaN(prev) || isNaN(curr)) return curr;
+
+        let result;
+        switch (operator) {
+          case 'add': result = prev + curr; break;
+          case 'subtract': result = prev - curr; break;
+          case 'multiply': result = prev * curr; break;
+          case 'divide':
+            if (curr === 0) return 'Error';
+            result = prev / curr;
+            break;
+          default: return curr;
+        }
+
+        return Math.round(result * 1e10) / 1e10;
+      }
+
+      function handleEquals() {
+        if (operator && !waitingForOperand) {
+          const result = calculate();
+          addToHistory(`${formatNumber(previousValue)} ${getOperatorSymbol(operator)} ${formatNumber(currentValue)}`, result);
+          currentValue = String(result);
+          operator = null;
+          previousValue = '';
+          waitingForOperand = true;
+          updateDisplay();
+        }
+      }
+
+      function handleClear() {
+        currentValue = '0';
+        previousValue = '';
+        operator = null;
+        waitingForOperand = false;
+        updateDisplay();
+      }
+
+      function handleBackspace() {
+        if (waitingForOperand) return;
+        if (currentValue.length === 1 || (currentValue.length === 2 && currentValue.startsWith('-'))) {
+          currentValue = '0';
+        } else {
+          currentValue = currentValue.slice(0, -1);
+        }
+        updateDisplay();
+      }
+
+      function handlePercent() {
+        const value = parseFloat(currentValue);
+        if (!isNaN(value)) {
+          currentValue = String(value / 100);
+          updateDisplay();
+        }
+      }
+
+      function addToHistory(expr, res) {
+        history.unshift({ expr, res: formatNumber(String(res)) });
+        if (history.length > 50) history.pop();
+        renderHistory();
+      }
+
+      function renderHistory() {
+        if (history.length === 0) {
+          historyList.innerHTML = '<div class="history-empty">No calculations yet</div>';
+          return;
+        }
+        historyList.innerHTML = history.map(item =>
+          `<div class="history-item" data-result="${item.res}">
+            <span class="expr">${item.expr}</span>
+            <span class="res">= ${item.res}</span>
+          </div>`
+        ).join('');
+      }
+
+      function useHistoryResult(result) {
+        currentValue = result;
+        waitingForOperand = true;
+        updateDisplay();
+        toggleHistory(false);
+      }
+
+      function toggleHistory(open) {
+        if (typeof open === 'boolean') {
+          historyPanel.classList.toggle('open', open);
+        } else {
+          historyPanel.classList.toggle('open');
+        }
+        historyToggle.textContent = historyPanel.classList.contains('open') ? 'History ▲' : 'History ▼';
+      }
+
+      function clearHistory() {
+        history = [];
+        renderHistory();
+      }
+
+      // Event delegation for keypad
+      keypad.addEventListener('click', (e) => {
+        const btn = e.target.closest('.btn');
+        if (!btn) return;
+
+        btn.classList.add('pressed');
+        setTimeout(() => btn.classList.remove('pressed'), 100);
+
+        if (btn.dataset.value !== undefined) {
+          if (btn.dataset.value === '.') {
+            inputDecimal();
+          } else {
+            inputDigit(btn.dataset.value);
+          }
+        } else if (btn.dataset.action) {
+          switch (btn.dataset.action) {
+            case 'clear': handleClear(); break;
+            case 'backspace': handleBackspace(); break;
+            case 'percent': handlePercent(); break;
+            case 'add': handleOperator('add'); break;
+            case 'subtract': handleOperator('subtract'); break;
+            case 'multiply': handleOperator('multiply'); break;
+            case 'divide': handleOperator('divide'); break;
+            case 'equals': handleEquals(); break;
+          }
+        }
+      });
+
+      // History events
+      historyToggle.addEventListener('click', () => toggleHistory());
+
+      historyList.addEventListener('click', (e) => {
+        const item = e.target.closest('.history-item');
+        if (item) {
+          useHistoryResult(item.dataset.result);
+        }
+      });
+
+      clearHistoryBtn.addEventListener('click', clearHistory);
+
+      // Keyboard support
+      document.addEventListener('keydown', (e) => {
+        if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+
+        const key = e.key;
+
+        if (key >= '0' && key <= '9') {
+          inputDigit(key);
+        } else if (key === '.') {
+          inputDecimal();
+        } else if (key === '+' || key === '-') {
+          handleOperator(key === '+' ? 'add' : 'subtract');
+        } else if (key === '*') {
+          handleOperator('multiply');
+        } else if (key === '/') {
+          e.preventDefault();
+          handleOperator('divide');
+        } else if (key === 'Enter' || key === '=') {
+          handleEquals();
+        } else if (key === 'Escape' || key === 'c' || key === 'C') {
+          handleClear();
+        } else if (key === 'Backspace') {
+          handleBackspace();
+        } else if (key === '%') {
+          handlePercent();
+        } else if (key === 'h' || key === 'H') {
+          toggleHistory();
+        }
+      });
+
+      // Initialize
+      updateDisplay();
+      renderHistory();
+    })();
+  </script>
+</body>
+</html>

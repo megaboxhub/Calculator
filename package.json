@@ -1,0 +1,29 @@
+{
+  "name": "calculator-app",
+  "version": "1.0.0",
+  "description": "A modern calculator app built with Capacitor",
+  "main": "index.js",
+  "scripts": {
+    "build": "npx cap sync android",
+    "android:open": "npx cap open android",
+    "android:build": "cd android && .\\gradlew.bat assembleDebug",
+    "android:build:release": "cd android && .\\gradlew.bat assembleRelease",
+    "sync": "npx cap sync",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "calculator",
+    "capacitor",
+    "android",
+    "pwa"
+  ],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@capacitor/android": "^8.6.2",
+    "@capacitor/cli": "^8.6.2",
+    "@capacitor/core": "^8.6.2"
+  },
+  "devDependencies": {}
+}
